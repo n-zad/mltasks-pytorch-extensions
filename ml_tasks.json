@@ -1,0 +1,33 @@
+{
+    "version": "1.2.0",
+    "prompt_language": "en",
+    "interface_protocols": {
+        "pytorch_task_v1": {
+            "entrypoint": "python tasks/<task_id>/task.py",
+            "prompt_instructions": "Implement this ML task as a SINGLE self-contained Python file (task.py). Include all required functions AND a complete `if __name__ == '__main__':` block that trains the model, evaluates on a validation split, prints standard metrics (MSE, R2, parameter accuracy where applicable), and asserts quality thresholds so the script exits non-zero on failure. Do NOT create separate test files or README. The script itself is the test.",
+            "must_have_files": [
+                "tasks/<task_id>/task.py"
+            ],
+            "required_functions": [
+                "get_task_metadata",
+                "set_seed",
+                "get_device",
+                "make_dataloaders",
+                "build_model",
+                "train",
+                "evaluate",
+                "predict",
+                "save_artifacts"
+            ],
+            "evaluation_rules": [
+                "The `evaluate()` function MUST compute and return standard metrics: MSE, R2 score, and any task-specific metrics on the VALIDATION data split.",
+                "The `if __name__ == '__main__':` block MUST: (1) train the model, (2) evaluate on BOTH train and validation splits, (3) print all metrics clearly, (4) assert quality thresholds (e.g., R2 > 0.9, MSE < threshold), (5) exit 0 on success or non-zero on failure.",
+                "Do NOT use a separate test file. All evaluation logic goes in main()."
+            ],
+            "required_cfg_keys": [],
+            "standard_outputs_schema": {},
+            "docstring_rules": []
+        }
+    },
+    "tasks": []
+}
