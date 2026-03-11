@@ -1,6 +1,6 @@
 # MLtasks PyTorch Extensions
 
-Four new PyTorch training and evaluation tasks extending the CoderGym MLtasks framework.
+Four new PyTorch training and evaluation tasks extending the CoderGym MLtasks framework. This repository adds a **Time Series Forecasting** series with tasks ranging from baseline smoothing to uncertainty-aware production-style forecasting.
 
 This repository is coursework for CMPE 258 Deep Learning at San Jose State University (Spring 2026).
 
@@ -13,28 +13,46 @@ Each task:
 * Trains and evaluates a model
 * Prints training and validation metrics
 * Asserts quality thresholds
-* Returns `sys.exit(0)` on success and non-zero on failure
+* Returns `exit(0)` on success and non-zero on failure
 
-## Added Tasks
+## Requirements
 
-### `<task_id_1>`
+* Python 3.8+
+* PyTorch
+* NumPy
+* Matplotlib (for visualizations)
 
-Brief description of the new dataset, optimizer, or training feature.
+## Task Details
 
-### `<task_id_2>`
+#### `ts_lvl1_baseline_smoothing` (Level 1)
 
-Brief description.
+Exponential smoothing from scratch using PyTorch tensors. Grid search over α and β to minimize train MSE. Uses synthetic data (sinusoid + trend + noise). Outputs: `ts_lvl1_params.pt`, `ts_lvl1_metrics.json`.
 
-### `<task_id_3>`
+#### `ts_lvl2_ar_autograd` (Level 2)
 
-Brief description.
+Autoregressive model predicting next value from past p values. Synthetic AR(2) process. Adam optimizer, device-agnostic. Outputs: `ts_lvl2_model.pt`, `ts_lvl2_metrics.json`, `ts_lvl2_forecast.png`.
 
-### `<task_id_4>`
+#### `ts_lvl3_lstm_multistep` (Level 3)
 
-Brief description.
+LSTM sequence-to-sequence forecaster for multi-step ahead predictions. Synthetic sum of sinusoids. LR scheduler, gradient clipping, early stopping. Outputs: `ts_lvl3_model.pt`, `ts_lvl3_metrics.json`, `ts_lvl3_multistep.png`.
+
+#### `ts_lvl4_uncertainty_production` (Level 4)
+
+LSTM with Monte Carlo dropout for prediction intervals. EDA (series plot, lag correlation), residual-based interval calibration. Outputs: `ts_lvl4_model.pt`, `ts_lvl4_report.json`, `ts_lvl4_eda.png`, `forecast_with_intervals.png`.
 
 ## Running a Task
 
-```
+```bash
 python tasks/<task_id>/task.py
 ```
+
+Example:
+
+```bash
+python tasks/ts_lvl1_baseline_smoothing/task.py
+python tasks/ts_lvl2_ar_autograd/task.py
+python tasks/ts_lvl3_lstm_multistep/task.py
+python tasks/ts_lvl4_uncertainty_production/task.py
+```
+
+Artifacts (models, metrics, plots) are written to `outputs/<task_id>/`.
