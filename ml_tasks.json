@@ -29,5 +29,70 @@
             "docstring_rules": []
         }
     },
-    "tasks": []
+    "tasks": [
+        {
+            "series": "Time Series Forecasting",
+            "level": 1,
+            "id": "ts_lvl1_baseline_smoothing",
+            "algorithm": "Time Series (Exponential Smoothing Baseline)",
+            "description": "Implement exponential smoothing (single and double) from scratch using PyTorch tensors. No autograd or optimizer—use grid search over alpha/beta to select best params. Establish baseline MSE on a simple univariate series.",
+            "interface_protocol": "pytorch_task_v1",
+            "requirements": {
+                "math": "Docstring must contain the exponential smoothing recurrence: s_t = alpha * x_t + (1-alpha) * s_{t-1}.",
+                "data": "Synthetic: sinusoid + trend + Gaussian noise. 80% train / 20% validation split.",
+                "implementation": "Manual update loop; no torch.nn, no torch.optim. Grid search over alpha (and beta for double) to minimize train MSE; update model with best params. Return smoothed series and one-step-ahead forecasts.",
+                "evaluation": "evaluate() must compute MSE, MAE, R2 on validation one-step forecasts.",
+                "main_block": "Print learned alpha/beta, train/val MSE; assert MSE < variance of series.",
+                "output": "Save learned params (alpha, beta, use_double) with torch.save() to ts_lvl1_params.pt; metrics to ts_lvl1_metrics.json."
+            }
+        },
+        {
+            "series": "Time Series Forecasting",
+            "level": 2,
+            "id": "ts_lvl2_ar_autograd",
+            "algorithm": "Autoregressive Model (AR with Autograd)",
+            "description": "Implement an AR(p) model using nn.Linear to predict next value from past p values. Use autograd and Adam optimizer.",
+            "interface_protocol": "pytorch_task_v1",
+            "requirements": {
+                "math": "Define AR(p): x_t = sum_i w_i * x_{t-i} + bias in LaTeX.",
+                "data": "Synthetic AR(2) process: x_t = 0.6*x_{t-1} + 0.3*x_{t-2} + noise. Create sliding-window features [x_{t-p}, ..., x_{t-1}] -> x_t. 80% train / 20% validation split.",
+                "implementation": "nn.Linear(p, 1); loss.backward(); Adam optimizer; device-agnostic.",
+                "visualization": "Save 'ts_lvl2_forecast.png' (actual vs predicted on validation).",
+                "evaluation": "MSE, MAE, R2 on validation; assert R2 > 0.6.",
+                "output": "Save model state_dict with torch.save() to ts_lvl2_model.pt; metrics (loss_history, val_mse, val_mae, val_r2) to ts_lvl2_metrics.json."
+            }
+        },
+        {
+            "series": "Time Series Forecasting",
+            "level": 3,
+            "id": "ts_lvl3_lstm_multistep",
+            "algorithm": "LSTM Multi-Step Forecasting",
+            "description": "Implement LSTM-based sequence-to-sequence forecasting for multi-step ahead predictions. Use teacher forcing during training; support configurable horizon.",
+            "interface_protocol": "pytorch_task_v1",
+            "requirements": {
+                "math": "Explain LSTM cell equations or multi-step prediction setup in docstring.",
+                "data": "Synthetic: sum of sinusoids + noise. Normalize; create sequences of length seq_len -> horizon. 80% train / 20% validation split.",
+                "implementation": "nn.LSTM; Adam; LR scheduler (ReduceLROnPlateau); gradient clipping; early stopping on val loss.",
+                "visualization": "Save 'ts_lvl3_multistep.png' showing true vs predicted for horizons 1, 3, 5.",
+                "evaluation": "MSE per horizon; assert horizon-1 MSE improves over naive (last-seen) baseline.",
+                "output": "Save model state_dict with torch.save() to ts_lvl3_model.pt; metrics (loss_history, mse_per_horizon, naive_mse_h1) to ts_lvl3_metrics.json."
+            }
+        },
+        {
+            "series": "Time Series Forecasting",
+            "level": 4,
+            "id": "ts_lvl4_uncertainty_production",
+            "algorithm": "Forecasting with Uncertainty (MC Dropout + Production)",
+            "description": "Add Monte Carlo dropout for prediction intervals; compare to point forecasts. Include EDA, preprocessing, and JSON output suitable for production reporting.",
+            "interface_protocol": "pytorch_task_v1",
+            "requirements": {
+                "data": "Synthetic: sinusoid + trend + Gaussian noise. Normalize; create sequences of length seq_len for one-step-ahead prediction. 80% train / 20% validation split.",
+                "eda": "Plot series (first 500 points) and simple lag correlation; save to ts_lvl4_eda.png.",
+                "implementation": "LSTM with dropout; MC dropout at inference (N forward passes); combine MC std with residual-based scaling for calibrated 90% intervals.",
+                "evaluation": "MSE, MAE; coverage of 90% prediction interval (fraction of true values inside interval); assert coverage in [0.8, 0.98].",
+                "output": "Save model state_dict with torch.save() to ts_lvl4_model.pt; report (point_metrics, interval_coverage, interval_width_mean, loss_history) to ts_lvl4_report.json; save forecast_with_intervals.png.",
+                "validation": "MC dropout intervals have reasonable coverage via residual calibration."
+            }
+        }
+    ]
 }
