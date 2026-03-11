@@ -15,13 +15,6 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader
 
-# Optional: sklearn for data
-try:
-    from sklearn.datasets import fetch_openml
-    HAS_SKLEARN = True
-except ImportError:
-    HAS_SKLEARN = False
-
 
 def get_task_metadata():
     """Return task metadata for pytorch_task_v1."""
@@ -59,7 +52,6 @@ def _create_sequences(series: np.ndarray, seq_len: int):
 def make_dataloaders(cfg=None):
     """
     Use synthetic data with known noise (faster, no download).
-    Or fetch_openml electricity subset if available.
     """
     cfg = cfg or {}
     seq_len = cfg.get("seq_len", 24)
