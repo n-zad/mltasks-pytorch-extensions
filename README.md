@@ -56,3 +56,12 @@ python tasks/ts_lvl4_uncertainty_production/task.py
 ```
 
 Artifacts (models, metrics, plots) are written to `outputs/<task_id>/`.
+
+# CUDA GEMM Benchmark
+
+The cuda-benchmark folder contains code to benchmark a simple fully connected (FC) layer using:
+
+- **PyTorch** (FP32 matmul with TF32 disabled vs enabled)
+- **CUDA C++ / cuBLAS** (baseline `cublasSgemm` vs TF32 Tensor Core GEMM using `cublasGemmEx`)
+
+Benchmarks sweep FC sizes, run warmup iterations, time with GPU events, and write results to disk for plotting.
