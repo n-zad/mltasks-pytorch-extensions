@@ -211,3 +211,6 @@ __marimo__/
 
 # Task outputs (models, metrics, plots)
 outputs/
+cuda-benchmark/plots/
+cuda-benchmark/*.json
+cuda-benchmark/*.exe
