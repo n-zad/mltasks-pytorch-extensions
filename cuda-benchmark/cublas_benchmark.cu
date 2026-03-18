@@ -3,10 +3,12 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
 struct ResultRow {
     std::string backend;
@@ -76,7 +78,8 @@ float benchmark_gemm_pair(
     checkCuda(cudaMalloc(&d_y, bytes_y), "malloc d_y");
 
     // Initialize with some values (we don't care about exact data)
-    std::vector<float> h_tmp(std::max({bytes_x, bytes_w1, bytes_w2}) / sizeof(float), 1.0f);
+    const size_t max_bytes = std::max(bytes_x, std::max(bytes_w1, bytes_w2));
+    std::vector<float> h_tmp(max_bytes / sizeof(float), 1.0f);
     checkCuda(cudaMemcpy(d_x, h_tmp.data(), bytes_x, cudaMemcpyHostToDevice), "memcpy x");
     checkCuda(cudaMemcpy(d_w1, h_tmp.data(), bytes_w1, cudaMemcpyHostToDevice), "memcpy w1");
     checkCuda(cudaMemcpy(d_w2, h_tmp.data(), bytes_w2, cudaMemcpyHostToDevice), "memcpy w2");
@@ -84,44 +87,86 @@ float benchmark_gemm_pair(
     float alpha = 1.0f;
     float beta = 0.0f;
 
-    // Set math mode
-    checkCublas(cublasSetMathMode(handle, use_tf32 ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH),
-                "set math mode");
+    // Baseline: cublasSgemm (FP32).
+    // TF32 path: cublasGemmEx (FP32 input/output, TF32 compute on Ampere+).
+    checkCublas(
+        cublasSetMathMode(handle, use_tf32 ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH),
+        "set math mode"
+    );
+
+    const cublasOperation_t opN = CUBLAS_OP_N;
+    const cudaDataType_t dt = CUDA_R_32F;
 
     // Warmup
     for (int i = 0; i < warmup_iters; ++i) {
         // FC = GEMM(X, W1) then GEMM(H, W2); we ignore bias/activation here to focus on GEMM
-        checkCublas(
-            cublasSgemm(
-                handle,
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n1,              // m
-                m1,              // n
-                k1,              // k
-                &alpha,
-                d_w1, n1,        // A: [n1, k1]
-                d_x, k1,         // B: [k1, m1]
-                &beta,
-                d_h, n1          // C: [n1, m1]
-            ),
-            "warmup gemm1"
-        );
+        if (!use_tf32) {
+            checkCublas(
+                cublasSgemm(
+                    handle,
+                    opN, opN,
+                    n1,              // m
+                    m1,              // n
+                    k1,              // k
+                    &alpha,
+                    d_w1, n1,        // A: [n1, k1]
+                    d_x, k1,         // B: [k1, m1]
+                    &beta,
+                    d_h, n1          // C: [n1, m1]
+                ),
+                "warmup gemm1 sgemm"
+            );
+        } else {
+            checkCublas(
+                cublasGemmEx(
+                    handle,
+                    opN, opN,
+                    n1, m1, k1,
+                    &alpha,
+                    d_w1, dt, n1,
+                    d_x, dt, k1,
+                    &beta,
+                    d_h, dt, n1,
+                    CUBLAS_COMPUTE_32F_FAST_TF32,
+                    CUBLAS_GEMM_DEFAULT_TENSOR_OP
+                ),
+                "warmup gemm1 gemmex tf32"
+            );
+        }
 
-        checkCublas(
-            cublasSgemm(
-                handle,
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n2,
-                m2,
-                k2,
-                &alpha,
-                d_w2, n2,
-                d_h, k2,
-                &beta,
-                d_y, n2
-            ),
-            "warmup gemm2"
-        );
+        if (!use_tf32) {
+            checkCublas(
+                cublasSgemm(
+                    handle,
+                    opN, opN,
+                    n2,
+                    m2,
+                    k2,
+                    &alpha,
+                    d_w2, n2,
+                    d_h, k2,
+                    &beta,
+                    d_y, n2
+                ),
+                "warmup gemm2 sgemm"
+            );
+        } else {
+            checkCublas(
+                cublasGemmEx(
+                    handle,
+                    opN, opN,
+                    n2, m2, k2,
+                    &alpha,
+                    d_w2, dt, n2,
+                    d_h, dt, k2,
+                    &beta,
+                    d_y, dt, n2,
+                    CUBLAS_COMPUTE_32F_FAST_TF32,
+                    CUBLAS_GEMM_DEFAULT_TENSOR_OP
+                ),
+                "warmup gemm2 gemmex tf32"
+            );
+        }
     }
 
     checkCuda(cudaDeviceSynchronize(), "warmup sync");
@@ -133,37 +178,73 @@ float benchmark_gemm_pair(
     checkCuda(cudaEventRecord(start), "record start");
 
     for (int i = 0; i < timed_iters; ++i) {
-        checkCublas(
-            cublasSgemm(
-                handle,
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n1,
-                m1,
-                k1,
-                &alpha,
-                d_w1, n1,
-                d_x, k1,
-                &beta,
-                d_h, n1
-            ),
-            "timed gemm1"
-        );
+        if (!use_tf32) {
+            checkCublas(
+                cublasSgemm(
+                    handle,
+                    opN, opN,
+                    n1,
+                    m1,
+                    k1,
+                    &alpha,
+                    d_w1, n1,
+                    d_x, k1,
+                    &beta,
+                    d_h, n1
+                ),
+                "timed gemm1 sgemm"
+            );
+        } else {
+            checkCublas(
+                cublasGemmEx(
+                    handle,
+                    opN, opN,
+                    n1, m1, k1,
+                    &alpha,
+                    d_w1, dt, n1,
+                    d_x, dt, k1,
+                    &beta,
+                    d_h, dt, n1,
+                    CUBLAS_COMPUTE_32F_FAST_TF32,
+                    CUBLAS_GEMM_DEFAULT_TENSOR_OP
+                ),
+                "timed gemm1 gemmex tf32"
+            );
+        }
 
-        checkCublas(
-            cublasSgemm(
-                handle,
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n2,
-                m2,
-                k2,
-                &alpha,
-                d_w2, n2,
-                d_h, k2,
-                &beta,
-                d_y, n2
-            ),
-            "timed gemm2"
-        );
+        if (!use_tf32) {
+            checkCublas(
+                cublasSgemm(
+                    handle,
+                    opN, opN,
+                    n2,
+                    m2,
+                    k2,
+                    &alpha,
+                    d_w2, n2,
+                    d_h, k2,
+                    &beta,
+                    d_y, n2
+                ),
+                "timed gemm2 sgemm"
+            );
+        } else {
+            checkCublas(
+                cublasGemmEx(
+                    handle,
+                    opN, opN,
+                    n2, m2, k2,
+                    &alpha,
+                    d_w2, dt, n2,
+                    d_h, dt, k2,
+                    &beta,
+                    d_y, dt, n2,
+                    CUBLAS_COMPUTE_32F_FAST_TF32,
+                    CUBLAS_GEMM_DEFAULT_TENSOR_OP
+                ),
+                "timed gemm2 gemmex tf32"
+            );
+        }
     }
 
     checkCuda(cudaEventRecord(stop), "record stop");
@@ -200,7 +281,7 @@ int main(int argc, char** argv) {
     std::vector<int> sizes = {512, 1024, 2048, 4096};
     int warmup_iters = 10;
     int timed_iters = 50;
-    std::string output_path = "cublas_fc_benchmark.csv";
+    std::string output_path = "results/cublas_benchmark.csv";
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -239,9 +320,8 @@ int main(int argc, char** argv) {
         bool use_tf32 = (use_tf32_int == 1);
         std::string mode = use_tf32 ? "tensor_core_tf32" : "cuda_core_fp32";
 
-        // For TF32 path we should call cublasGemmEx with math mode set to TF32.
-        // To keep this file shorter, we reuse cublasSgemm while toggling math mode;
-        // on Ampere+ with TF32 enabled, SGEMM will internally use TF32 Tensor Cores.
+        // Baseline uses cublasSgemm (FP32).
+        // TF32 path uses cublasGemmEx (FP32 input/output, TF32 compute on Ampere+).
 
         for (int hidden : sizes) {
             // Time the GEMM pair
@@ -287,6 +367,15 @@ int main(int argc, char** argv) {
     cublasDestroy(handle);
 
     // Write CSV header compatible with plotting script
+    try {
+        std::filesystem::path outp(output_path);
+        if (outp.has_parent_path()) {
+            std::filesystem::create_directories(outp.parent_path());
+        }
+    } catch (...) {
+        // If directory creation fails, the file open below will fail and report an error.
+    }
+
     std::ofstream ofs(output_path);
     if (!ofs) {
         std::fprintf(stderr, "Failed to open output file %s\n", output_path.c_str());

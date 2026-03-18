@@ -1,0 +1,90 @@
+[
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 512,
+    "out_features": 4096,
+    "avg_ms": 0.5952096176147461,
+    "tflops": 3.607945141420707,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 1024,
+    "out_features": 4096,
+    "avg_ms": 1.0919526672363282,
+    "tflops": 3.933290723003887,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 2048,
+    "out_features": 4096,
+    "avg_ms": 1.858682861328125,
+    "tflops": 4.621517081113045,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 4096,
+    "out_features": 4096,
+    "avg_ms": 3.4239077758789063,
+    "tflops": 5.017620306548701,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 512,
+    "out_features": 4096,
+    "avg_ms": 0.457625617980957,
+    "tflops": 4.692664841349337,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 1024,
+    "out_features": 4096,
+    "avg_ms": 0.5798502349853516,
+    "tflops": 7.407028637504132,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 2048,
+    "out_features": 4096,
+    "avg_ms": 1.1683379364013673,
+    "tflops": 7.352268829392047,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 4096,
+    "out_features": 4096,
+    "avg_ms": 2.3192576599121093,
+    "tflops": 7.407486231888116,
+    "tf32": true
+  }
+]

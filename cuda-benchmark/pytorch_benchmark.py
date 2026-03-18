@@ -112,7 +112,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="pytorch_fc_benchmark.json",
+        default=os.path.join("results", "pytorch_benchmark.json"),
         help="Output JSON file to write results.",
     )
 

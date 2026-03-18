@@ -65,3 +65,12 @@ The cuda-benchmark folder contains code to benchmark a simple fully connected (F
 - **CUDA C++ / cuBLAS** (baseline `cublasSgemm` vs TF32 Tensor Core GEMM using `cublasGemmEx`)
 
 Benchmarks sweep FC sizes, run warmup iterations, time with GPU events, and write results to disk for plotting.
+
+Default benchmark configuration:
+
+- **Batch size**: 256
+- **Input features**: 4096
+- **Output features**: 4096
+- **Hidden sizes swept**: 512, 1024, 2048, 4096 (configurable via `--sizes`)
+- **Warm-up iterations**: 10
+- **Timed iterations**: 50 (average latency and TFLOP/s reported over these forwards)

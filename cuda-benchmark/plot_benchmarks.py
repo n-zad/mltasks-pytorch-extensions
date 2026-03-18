@@ -70,23 +70,23 @@ def plot_metric_vs_hidden(results, backend, metric, out_path: Path, ylabel: str)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot FC GEMM TF32 vs FP32 benchmarks.")
+    parser = argparse.ArgumentParser(description="Plot GEMM TF32 vs FP32 benchmarks.")
     parser.add_argument(
         "--pytorch_json",
         type=str,
-        default="pytorch_fc_benchmark.json",
+        default=str(Path("results") / "pytorch_benchmark.json"),
         help="Path to PyTorch benchmark JSON.",
     )
     parser.add_argument(
         "--cublas_csv",
         type=str,
-        default="cublas_fc_benchmark.csv",
+        default=str(Path("results") / "cublas_benchmark.csv"),
         help="Path to cuBLAS benchmark CSV.",
     )
     parser.add_argument(
         "--out_dir",
         type=str,
-        default="plots",
+        default=str(Path("results") / "plots"),
         help="Directory to write plots into.",
     )
     args = parser.parse_args()
