@@ -201,6 +201,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# VSCode
+.vscode/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
@@ -208,3 +211,4 @@ __marimo__/
 
 # Task outputs (models, metrics, plots)
 outputs/
+cuda-benchmark/*.exe

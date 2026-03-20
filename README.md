@@ -56,3 +56,29 @@ python tasks/ts_lvl4_uncertainty_production/task.py
 ```
 
 Artifacts (models, metrics, plots) are written to `outputs/<task_id>/`.
+
+# CUDA GEMM Benchmark
+
+The cuda-benchmark folder contains code to benchmark a simple fully connected (FC) layer using:
+
+- **PyTorch** (FP32 matmul with TF32 disabled vs enabled)
+- **CUDA C++ / cuBLAS** (baseline `cublasSgemm` vs TF32 Tensor Core GEMM using `cublasGemmEx`)
+
+Benchmarks sweep FC sizes, run warmup iterations, time with GPU events, and write results to disk for plotting.
+
+Default benchmark configuration:
+
+- **Batch size**: 256
+- **Input features**: 4096
+- **Output features**: 4096
+- **Hidden sizes swept**: 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 (configurable via `--sizes`)
+- **Warm-up iterations**: 25
+- **Timed iterations**: 200 (average latency and TFLOP/s reported over these forwards)
+
+## Colab notebook
+
+`cuda-benchmark/cuda_benchmark_colab.ipynb` mounts Google Drive, compiles the cuBLAS benchmark with `nvcc`, runs the PyTorch and cuBLAS benchmarks with their default settings, and writes plots under `cuda-benchmark/plots/`. Copy the `cuda-benchmark/` folder to `MyDrive/cuda-benchmark/` before running.
+
+The included results and plots were produced on a Google Colab runtime with an **A100** GPU.
+
+For an **A100** GPU: in Colab use **Runtime → Change runtime type → Hardware accelerator: GPU**, then pick an **A100** option if available.
