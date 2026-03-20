@@ -36,6 +36,34 @@ static void checkCublas(cublasStatus_t status, const char* msg) {
     }
 }
 
+// d_h / d_y are treated as column-major matrices to match cuBLAS GEMM outputs:
+// GEMM1 output d_h: [hidden_features, batch_size] (lda/ldc = n1)
+// GEMM2 output d_y: [out_features, batch_size] (lda/ldc = n2)
+__global__ void add_bias_relu_kernel(float* d_mat, const float* d_bias, int n_rows, int n_cols) {
+    const int idx0 = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = n_rows * n_cols;
+    const int stride = gridDim.x * blockDim.x;
+
+    for (int idx = idx0; idx < total; idx += stride) {
+        // Column-major linear index: idx = row + col*n_rows
+        const int row = idx % n_rows;
+        const float v = d_mat[idx] + d_bias[row];
+        d_mat[idx] = v > 0.0f ? v : 0.0f;
+    }
+}
+
+__global__ void add_bias_kernel(float* d_mat, const float* d_bias, int n_rows, int n_cols) {
+    const int idx0 = blockIdx.x * blockDim.x + threadIdx.x;
+    const int total = n_rows * n_cols;
+    const int stride = gridDim.x * blockDim.x;
+
+    for (int idx = idx0; idx < total; idx += stride) {
+        // Column-major linear index: idx = row + col*n_rows
+        const int row = idx % n_rows;
+        d_mat[idx] += d_bias[row];
+    }
+}
+
 float benchmark_gemm_pair(
     cublasHandle_t handle,
     int batch_size,
@@ -64,25 +92,36 @@ float benchmark_gemm_pair(
     size_t bytes_w2 = size_t(k2) * n2 * sizeof(float);
     size_t bytes_h  = size_t(m1) * n1 * sizeof(float);
     size_t bytes_y  = size_t(m2) * n2 * sizeof(float);
+    size_t bytes_b1 = size_t(n1) * sizeof(float);
+    size_t bytes_b2 = size_t(n2) * sizeof(float);
 
     float* d_x = nullptr;
     float* d_w1 = nullptr;
     float* d_w2 = nullptr;
     float* d_h = nullptr;
     float* d_y = nullptr;
+    float* d_b1 = nullptr;
+    float* d_b2 = nullptr;
 
     checkCuda(cudaMalloc(&d_x, bytes_x), "malloc d_x");
     checkCuda(cudaMalloc(&d_w1, bytes_w1), "malloc d_w1");
     checkCuda(cudaMalloc(&d_w2, bytes_w2), "malloc d_w2");
     checkCuda(cudaMalloc(&d_h, bytes_h), "malloc d_h");
     checkCuda(cudaMalloc(&d_y, bytes_y), "malloc d_y");
+    checkCuda(cudaMalloc(&d_b1, bytes_b1), "malloc d_b1");
+    checkCuda(cudaMalloc(&d_b2, bytes_b2), "malloc d_b2");
 
     // Initialize with some values (we don't care about exact data)
-    const size_t max_bytes = std::max(bytes_x, std::max(bytes_w1, bytes_w2));
+    const size_t max_bytes = std::max(
+        bytes_x,
+        std::max(bytes_w1, std::max(bytes_w2, std::max(bytes_b1, bytes_b2)))
+    );
     std::vector<float> h_tmp(max_bytes / sizeof(float), 1.0f);
     checkCuda(cudaMemcpy(d_x, h_tmp.data(), bytes_x, cudaMemcpyHostToDevice), "memcpy x");
     checkCuda(cudaMemcpy(d_w1, h_tmp.data(), bytes_w1, cudaMemcpyHostToDevice), "memcpy w1");
     checkCuda(cudaMemcpy(d_w2, h_tmp.data(), bytes_w2, cudaMemcpyHostToDevice), "memcpy w2");
+    checkCuda(cudaMemcpy(d_b1, h_tmp.data(), bytes_b1, cudaMemcpyHostToDevice), "memcpy b1");
+    checkCuda(cudaMemcpy(d_b2, h_tmp.data(), bytes_b2, cudaMemcpyHostToDevice), "memcpy b2");
 
     float alpha = 1.0f;
     float beta = 0.0f;
@@ -97,9 +136,19 @@ float benchmark_gemm_pair(
     const cublasOperation_t opN = CUBLAS_OP_N;
     const cudaDataType_t dt = CUDA_R_32F;
 
+    // Launch configuration for bias+ReLU (GEMM1 output) and bias add (GEMM2 output).
+    const int relu_threads = 256;
+    const int relu_total = n1 * m1;
+    const int relu_blocks = (relu_total + relu_threads - 1) / relu_threads;
+    const int bias_total = n2 * m2;
+    const int bias_blocks = (bias_total + relu_threads - 1) / relu_threads;
+
     // Warmup
     for (int i = 0; i < warmup_iters; ++i) {
-        // FC = GEMM(X, W1) then GEMM(H, W2); we ignore bias/activation here to focus on GEMM
+        // Full FC forward:
+        //   H = GEMM(X, W1) + b1
+        //   H = ReLU(H)
+        //   Y = GEMM(H, W2) + b2
         if (!use_tf32) {
             checkCublas(
                 cublasSgemm(
@@ -134,6 +183,9 @@ float benchmark_gemm_pair(
             );
         }
 
+        add_bias_relu_kernel<<<relu_blocks, relu_threads>>>(d_h, d_b1, n1, m1);
+        checkCuda(cudaGetLastError(), "warmup bias+relu kernel");
+
         if (!use_tf32) {
             checkCublas(
                 cublasSgemm(
@@ -167,6 +219,9 @@ float benchmark_gemm_pair(
                 "warmup gemm2 gemmex tf32"
             );
         }
+
+        add_bias_kernel<<<bias_blocks, relu_threads>>>(d_y, d_b2, n2, m2);
+        checkCuda(cudaGetLastError(), "warmup bias add kernel");
     }
 
     checkCuda(cudaDeviceSynchronize(), "warmup sync");
@@ -212,6 +267,9 @@ float benchmark_gemm_pair(
             );
         }
 
+        add_bias_relu_kernel<<<relu_blocks, relu_threads>>>(d_h, d_b1, n1, m1);
+        checkCuda(cudaGetLastError(), "timed bias+relu kernel");
+
         if (!use_tf32) {
             checkCublas(
                 cublasSgemm(
@@ -245,6 +303,9 @@ float benchmark_gemm_pair(
                 "timed gemm2 gemmex tf32"
             );
         }
+
+        add_bias_kernel<<<bias_blocks, relu_threads>>>(d_y, d_b2, n2, m2);
+        checkCuda(cudaGetLastError(), "timed bias add kernel");
     }
 
     checkCuda(cudaEventRecord(stop), "record stop");
@@ -269,6 +330,8 @@ float benchmark_gemm_pair(
     cudaFree(d_w2);
     cudaFree(d_h);
     cudaFree(d_y);
+    cudaFree(d_b1);
+    cudaFree(d_b2);
 
     return static_cast<float>(tflops);
 }
