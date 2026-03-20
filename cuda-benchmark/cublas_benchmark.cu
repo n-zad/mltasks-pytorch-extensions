@@ -278,9 +278,9 @@ int main(int argc, char** argv) {
     int batch_size = 256;
     int in_features = 4096;
     int out_features = 4096;
-    std::vector<int> sizes = {512, 1024, 2048, 4096};
-    int warmup_iters = 10;
-    int timed_iters = 50;
+    std::vector<int> sizes = {64, 128, 256, 512, 1024, 2048, 4096, 8192};
+    int warmup_iters = 20;
+    int timed_iters = 100;
     std::string output_path = "results/cublas_benchmark.csv";
 
     for (int i = 1; i < argc; ++i) {

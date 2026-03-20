@@ -71,6 +71,6 @@ Default benchmark configuration:
 - **Batch size**: 256
 - **Input features**: 4096
 - **Output features**: 4096
-- **Hidden sizes swept**: 512, 1024, 2048, 4096 (configurable via `--sizes`)
-- **Warm-up iterations**: 10
-- **Timed iterations**: 50 (average latency and TFLOP/s reported over these forwards)
+- **Hidden sizes swept**: 64, 128, 256, 512, 1024, 2048, 4096, 8192 (configurable via `--sizes`)
+- **Warm-up iterations**: 20
+- **Timed iterations**: 100 (average latency and TFLOP/s reported over these forwards)
