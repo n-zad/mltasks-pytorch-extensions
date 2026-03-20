@@ -98,14 +98,14 @@ def main():
     parser.add_argument(
         "--sizes",
         type=str,
-        default="64,128,256,512,1024,2048,4096,8192",
+        default="64,128,256,512,1024,2048,4096,8192,16384",
         help="Comma-separated list of hidden layer sizes to benchmark.",
     )
     parser.add_argument("--batch_size", type=int, default=256, help="Batch size.")
     parser.add_argument("--in_features", type=int, default=4096, help="Input feature dimension.")
     parser.add_argument("--out_features", type=int, default=4096, help="Output feature dimension.")
-    parser.add_argument("--warmup_iters", type=int, default=20, help="Warmup iterations.")
-    parser.add_argument("--timed_iters", type=int, default=100, help="Timed iterations per config.")
+    parser.add_argument("--warmup_iters", type=int, default=25, help="Warmup iterations.")
+    parser.add_argument("--timed_iters", type=int, default=200, help="Timed iterations per config.")
     parser.add_argument(
         "--device", type=str, default="cuda", help="Device to run on (default: cuda)."
     )

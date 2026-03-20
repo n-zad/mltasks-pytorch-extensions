@@ -4,6 +4,7 @@ import csv
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import NullLocator
 
 
 def load_pytorch_results(path: Path):
@@ -29,6 +30,13 @@ def load_cublas_results(path: Path):
             row["tf32"] = bool(int(row["tf32"]))
             rows.append(row)
     return rows
+
+
+def _configure_hidden_xaxis(ax, hidden_sizes: list[int]) -> None:
+    ax.set_xscale("log", base=2)
+    ax.set_xticks(hidden_sizes)
+    ax.set_xticklabels([str(h) for h in hidden_sizes])
+    ax.xaxis.set_minor_locator(NullLocator())
 
 
 def plot_metric_vs_hidden(results, backend, metric, out_path: Path, ylabel: str):
@@ -61,6 +69,7 @@ def plot_metric_vs_hidden(results, backend, metric, out_path: Path, ylabel: str)
     plt.xlabel("Hidden size")
     plt.ylabel(ylabel)
     plt.title(f"{backend}: {ylabel} vs hidden size")
+    _configure_hidden_xaxis(plt.gca(), hidden_sizes)
     plt.grid(True, linestyle="--", alpha=0.4)
     plt.legend()
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -106,6 +115,7 @@ def plot_metric_vs_hidden_combined(results, metric, out_path: Path, ylabel: str)
     plt.xlabel("Hidden size")
     plt.ylabel(ylabel)
     plt.title(f"Combined: {ylabel} vs hidden size")
+    _configure_hidden_xaxis(plt.gca(), hidden_sizes)
     plt.grid(True, linestyle="--", alpha=0.4)
     plt.legend()
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -131,7 +141,7 @@ def main():
     parser.add_argument(
         "--out_dir",
         type=str,
-        default=str(Path("results") / "plots"),
+        default=str(Path("plots")),
         help="Directory to write plots into.",
     )
     args = parser.parse_args()

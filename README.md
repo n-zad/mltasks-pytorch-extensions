@@ -71,6 +71,14 @@ Default benchmark configuration:
 - **Batch size**: 256
 - **Input features**: 4096
 - **Output features**: 4096
-- **Hidden sizes swept**: 64, 128, 256, 512, 1024, 2048, 4096, 8192 (configurable via `--sizes`)
-- **Warm-up iterations**: 20
-- **Timed iterations**: 100 (average latency and TFLOP/s reported over these forwards)
+- **Hidden sizes swept**: 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 (configurable via `--sizes`)
+- **Warm-up iterations**: 25
+- **Timed iterations**: 200 (average latency and TFLOP/s reported over these forwards)
+
+## Colab notebook
+
+`cuda-benchmark/cuda_benchmark_colab.ipynb` mounts Google Drive, compiles the cuBLAS benchmark with `nvcc`, runs the PyTorch and cuBLAS benchmarks with their default settings, and writes plots under `cuda-benchmark/plots/`. Copy the `cuda-benchmark/` folder to `MyDrive/cuda-benchmark/` before running.
+
+The included results and plots were produced on a Google Colab runtime with an **A100** GPU.
+
+For an **A100** GPU: in Colab use **Runtime → Change runtime type → Hardware accelerator: GPU**, then pick an **A100** option if available.
