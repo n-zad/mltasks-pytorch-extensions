@@ -4,10 +4,43 @@
     "mode": "cuda_core_fp32",
     "batch_size": 256,
     "in_features": 4096,
+    "hidden_features": 64,
+    "out_features": 4096,
+    "avg_ms": 0.16975360870361328,
+    "tflops": 1.5813240027708833,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 128,
+    "out_features": 4096,
+    "avg_ms": 0.09135616302490235,
+    "tflops": 5.876679735921668,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 256,
+    "out_features": 4096,
+    "avg_ms": 0.13667327880859376,
+    "tflops": 7.8562673944753945,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
     "hidden_features": 512,
     "out_features": 4096,
-    "avg_ms": 0.5952096176147461,
-    "tflops": 3.607945141420707,
+    "avg_ms": 0.21257728576660156,
+    "tflops": 10.10213128018683,
     "tf32": false
   },
   {
@@ -17,8 +50,8 @@
     "in_features": 4096,
     "hidden_features": 1024,
     "out_features": 4096,
-    "avg_ms": 1.0919526672363282,
-    "tflops": 3.933290723003887,
+    "avg_ms": 0.36589054107666014,
+    "tflops": 11.738393901525138,
     "tf32": false
   },
   {
@@ -28,8 +61,8 @@
     "in_features": 4096,
     "hidden_features": 2048,
     "out_features": 4096,
-    "avg_ms": 1.858682861328125,
-    "tflops": 4.621517081113045,
+    "avg_ms": 0.7123200225830079,
+    "tflops": 12.059094676085707,
     "tf32": false
   },
   {
@@ -39,9 +72,64 @@
     "in_features": 4096,
     "hidden_features": 4096,
     "out_features": 4096,
-    "avg_ms": 3.4239077758789063,
-    "tflops": 5.017620306548701,
+    "avg_ms": 1.2131993865966797,
+    "tflops": 14.160796134420844,
     "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 8192,
+    "out_features": 4096,
+    "avg_ms": 2.282168273925781,
+    "tflops": 15.055742716506373,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "cuda_core_fp32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 16384,
+    "out_features": 4096,
+    "avg_ms": 4.33027587890625,
+    "tflops": 15.86953779798374,
+    "tf32": false
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 64,
+    "out_features": 4096,
+    "avg_ms": 0.09794560432434082,
+    "tflops": 2.7406585303317192,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 128,
+    "out_features": 4096,
+    "avg_ms": 0.09975296020507812,
+    "tflops": 5.382004813654338,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 256,
+    "out_features": 4096,
+    "avg_ms": 0.09693183898925781,
+    "tflops": 11.07728724840343,
+    "tf32": true
   },
   {
     "backend": "pytorch",
@@ -50,8 +138,8 @@
     "in_features": 4096,
     "hidden_features": 512,
     "out_features": 4096,
-    "avg_ms": 0.457625617980957,
-    "tflops": 4.692664841349337,
+    "avg_ms": 0.09805312156677246,
+    "tflops": 21.90122674001359,
     "tf32": true
   },
   {
@@ -61,8 +149,8 @@
     "in_features": 4096,
     "hidden_features": 1024,
     "out_features": 4096,
-    "avg_ms": 0.5798502349853516,
-    "tflops": 7.407028637504132,
+    "avg_ms": 0.09755135536193847,
+    "tflops": 44.027756252741554,
     "tf32": true
   },
   {
@@ -72,8 +160,8 @@
     "in_features": 4096,
     "hidden_features": 2048,
     "out_features": 4096,
-    "avg_ms": 1.1683379364013673,
-    "tflops": 7.352268829392047,
+    "avg_ms": 0.12922368049621583,
+    "tflops": 66.47337824626923,
     "tf32": true
   },
   {
@@ -83,8 +171,30 @@
     "in_features": 4096,
     "hidden_features": 4096,
     "out_features": 4096,
-    "avg_ms": 2.3192576599121093,
-    "tflops": 7.407486231888116,
+    "avg_ms": 0.20323328018188477,
+    "tflops": 84.53275550453537,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 8192,
+    "out_features": 4096,
+    "avg_ms": 0.3551180648803711,
+    "tflops": 96.75581663122317,
+    "tf32": true
+  },
+  {
+    "backend": "pytorch",
+    "mode": "tensor_core_tf32",
+    "batch_size": 256,
+    "in_features": 4096,
+    "hidden_features": 16384,
+    "out_features": 4096,
+    "avg_ms": 0.6832947540283203,
+    "tflops": 100.57076588232053,
     "tf32": true
   }
 ]
