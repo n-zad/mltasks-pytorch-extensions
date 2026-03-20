@@ -69,6 +69,51 @@ def plot_metric_vs_hidden(results, backend, metric, out_path: Path, ylabel: str)
     plt.close()
 
 
+def plot_metric_vs_hidden_combined(results, metric, out_path: Path, ylabel: str):
+    hidden_sizes = sorted({r["hidden_features"] for r in results})
+    if not hidden_sizes:
+        return
+
+    series = [
+        ("pytorch", "cuda_core_fp32"),
+        ("pytorch", "tensor_core_tf32"),
+        ("cublas", "cuda_core_fp32"),
+        ("cublas", "tensor_core_tf32"),
+    ]
+
+    plt.figure(figsize=(8, 5))
+
+    for backend, mode in series:
+        xs = []
+        ys = []
+        for h in hidden_sizes:
+            matches = [
+                r
+                for r in results
+                if r["backend"] == backend
+                and r["mode"] == mode
+                and r["hidden_features"] == h
+            ]
+            if not matches:
+                continue
+            xs.append(h)
+            ys.append(matches[0][metric])
+
+        if xs:
+            label = f"{backend} - {mode}"
+            plt.plot(xs, ys, marker="o", label=label)
+
+    plt.xlabel("Hidden size")
+    plt.ylabel(ylabel)
+    plt.title(f"Combined: {ylabel} vs hidden size")
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.legend()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Plot GEMM TF32 vs FP32 benchmarks.")
     parser.add_argument(
@@ -144,6 +189,20 @@ def main():
         backend="cublas",
         metric="tflops",
         out_path=out_dir / "cublas_tflops_vs_hidden.png",
+        ylabel="Throughput (TFLOP/s)",
+    )
+
+    # Combined backend plots
+    plot_metric_vs_hidden_combined(
+        all_results,
+        metric="avg_ms",
+        out_path=out_dir / "combined_latency_vs_hidden.png",
+        ylabel="Avg latency per forward (ms)",
+    )
+    plot_metric_vs_hidden_combined(
+        all_results,
+        metric="tflops",
+        out_path=out_dir / "combined_tflops_vs_hidden.png",
         ylabel="Throughput (TFLOP/s)",
     )
 
